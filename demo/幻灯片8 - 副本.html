@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="./js/mTween.js"></script>
+    <style id="style"> 
+        *{ padding: 0; margin: 0;} 
+        body{ width: 100%; background: rgba(240,226,226,1);}
+        .view {
+            width: 900px; 
+            border: 1px solid #CCC; margin: 50px auto; 
+            height: 600px; 
+            perspective: 800px;
+        }
+        .bigbox{ height: 600px;  position:relative; transform-style: preserve-3d; }
+
+        .box{transform-style: preserve-3d; width: 150px; height: 150px; text-align: center;  transform-origin: center  center -75px; position:absolute;}
+        .box span{ position: absolute; top: 0; left: 0; width: 100%; height: 100%; background:rgba(240, 226, 226, 0.4)
+        }
+        .box span:nth-of-type(1){ transform: translateZ(-75px) rotateY(0deg) translateZ(75px);}
+        .box span:nth-of-type(2){ transform: translateZ(-75px) rotateY(90deg) translateZ(75px);}
+        .box span:nth-of-type(3){ transform: translateZ(-75px) rotateY(180deg) translateZ(75px);}
+        .box span:nth-of-type(4){ transform: translateZ(-75px) rotateY(270deg) translateZ(75px);}
+        .box span:nth-of-type(5){ transform: translateZ(-75px) rotateX(-90deg) translateZ(75px);}
+        .box span:nth-of-type(6){ transform: translateZ(-75px) rotateX(-90deg) translateZ(75px);}
+        
+        .box span{ 
+            background-color:rgba(240, 226, 226, 0.8);
+            box-shadow: inset 0 0 20px #666;
+            opacity: 0;
+            transition: 1.5s opacity ;
+        } 
+        .box.show span {
+            opacity: 1;  
+            box-shadow: inset 0 0 30px #333;
+        }
+    </style>
+    <script>
+        window.onload=function(){
+            let bigBox=document.querySelector('.bigbox');
+            
+            let boxW=150;
+            let boxH=150;
+            let colN=parseInt(bigBox.offsetWidth/boxW);
+            let rowN=parseInt(bigBox.offsetHeight/boxH);
+            let posArr=[]; //存储元素位置
+            let boxs=bigBox.children;
+            let sumN=colN*rowN*2;
+
+            let picList=['1.jpg','2.jpg','3.jpg','4.jpg'];
+
+            for(let r=0; r<rowN;r++){
+                for(let c=0;c<colN;c++){
+                    createOneBox(c,r,0);
+                }
+            }
+
+            setTimeout(function(){
+                for(let r=0; r<rowN;r++){
+                    for(let c=0;c<colN;c++){
+                        createOneBox(c,r,true);
+                    }
+                }
+            },300)
+
+            function createOneBox(c,r,last){
+                
+                let el = document.createElement('div');
+                let rdmZ= 300+Math.random()*200;
+                let rdmX=(c - colN/2)*50;
+                let rdmY=(r - rowN/2)*50;
+                
+                el.dataset.r=r;
+                el.dataset.c=c;
+                el.classList.add('box');
+                el.style.left=c*boxW+'px';
+                el.style.top=r*boxH+'px';
+                css(el,'translateX',rdmX);
+                css(el,'translateY',rdmY);
+                css(el,'translateZ',rdmZ);
+                el.innerHTML = '<span></span><span></span><span></span><span></span><span></span><span></span>';
+                bigBox.appendChild(el);
+
+                if(last){
+                    for(let i=0;i<4;i++){
+                        el.children[i].style.background=`url(img/${picList[i]}) -${el.dataset.c*boxW}px -${el.dataset.r*boxH}px`;
+                        el.children[i].style.boxShadow="none";
+                    }
+                }
+
+                setTimeout(() => {
+                    el.classList.add('show');
+                    mTween({
+                        el:el,
+                        attrs:{
+                            translateZ:0,
+                            translateX:0,
+                            translateY:0
+                        },
+                        fx:'easeOutStrong',
+                        duration:{
+                            multiple:2.8,
+                            min:400
+                        },
+                        cb:function(){
+                            //删除隐形box
+                            if(!last){
+                                setTimeout(()=>{
+                                    bigBox.removeChild(el);
+                                },1500);
+                            }
+                        }
+                    });
+                }, Math.random()*800);
+            }
+
+
+
+            let iNow=0;
+            let btn1=document.querySelector('#btn1');
+            let btn2=document.querySelector('#btn2');
+            let ready=true;
+            
+
+
+            btn1.onclick=function(){
+                if(!ready)return;
+                iNow++;
+                tab(iNow)
+            }
+
+            btn2.onclick=function(){
+                if(!ready)return;
+                iNow--;
+                tab(iNow)
+            }
+
+          function tab(iNow){
+                ready=false;
+                let num=0;
+                let childrens=document.querySelectorAll('.box');
+                let colN = parseInt(bigBox.offsetWidth/boxW);
+                for(let i=0;i<childrens.length;i++){
+                    if(!css(childrens[i],'rotateY')){
+                        css(childrens[i],'rotateY',0);
+                    }
+                   let x = childrens[i].dataset.c;
+                   let y = childrens[i].dataset.r;
+                   let dir = 1;
+                   if(y%2){
+                        dir = x%2?-1:1;
+                   } else {
+                        dir = x%2?1:-1;
+                   }
+                    setTimeout(function(){
+                        mTween({
+                            el:childrens[i],
+                            attrs:{
+                                translateZ: 75*dir
+                            },
+                            duration:400,
+                            fx:'easeOutStrong',
+                            cb:function(){
+                                mTween({
+                                    el:childrens[i],
+                                    attrs:{
+                                        rotateY:parseInt(-90*iNow)
+                                    },
+                                    duration:400,
+                                    fx:'easeOutStrong',
+                                    cb:function(){
+                                        mTween({
+                                            el:childrens[i],
+                                            attrs:{
+                                                translateZ:0
+                                            },
+                                            duration:500,
+                                            fx:'backOut',
+                                            cb:function(){
+                                                num++;
+                                                if(num==colN*rowN){
+                                                    ready=true;
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    },Math.random()*400);
+                }
+            }
+        }
+
+
+
+    </script>
+</head>
+<body>
+    <input type="button" name="" id="btn1" value="←左">
+    <input type="button" name="" id="btn2" value="→右">
+    
+    <div class="view">
+        <div class="bigbox">
+
+        </div>
+    </div>
+
+
+    
+
+</body>
+</html>
